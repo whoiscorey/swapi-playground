@@ -10,4 +10,8 @@ function swapiFetch(category) {
 
 const swapiCategory = process.argv[2]
 
-swapiFetch(`${swapiCategory}`)
+if (swapiCategory) {
+  swapiFetch(`${swapiCategory}`)
+} else {
+  console.log(`category required: ${categories}`)
+}
