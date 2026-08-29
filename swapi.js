@@ -1,6 +1,5 @@
-function swapiFetch(category) {
-  const baseUrl = `https://swapi.info/api`
-  fetch(`${baseUrl}/${category}`)
+function swapiFetch(url) {
+  fetch(url)
     .then((res) => res.json())
     .then((json) => console.log(json))
     .catch((error) => console.error(error))
@@ -8,18 +7,24 @@ function swapiFetch(category) {
 
 function swapi() {
   const categories = ['films', 'people', 'planets', 'species', 'starships', 'vehicles']
-  const category = process.argv[2]
-  const result = categories.find((arg) => arg === `${category}`)
+
+  const category = categories.find((arg) => arg === process.argv[2])
+  const schema = process.argv[3]
+
+  const baseUrl = `https://swapi.info/api`
+  const categoryUrl = `${baseUrl}/${category}`
+  const schemaUrl = `${categoryUrl}/${schema}`
 
   switch (true) {
-    case !!result:
-      swapiFetch(category)
+    case !!schema:
+      swapiFetch(schemaUrl)
       break
-    case !category:
-      console.log(`category required: ${categories}`)
+    case !!category:
+      swapiFetch(categoryUrl)
       break
     default:
-      console.log(`available categories: ${categories}`)
+      console.log('category required:')
+      swapiFetch(baseUrl)
   }
 }
 
