@@ -9,15 +9,15 @@ function swapi() {
   const categories = ['films', 'people', 'planets', 'species', 'starships', 'vehicles']
 
   const category = categories.find((arg) => arg === process.argv[2])
-  const schema = process.argv[3]
+  const id = process.argv[3]
 
   const baseUrl = `https://swapi.info/api`
   const categoryUrl = `${baseUrl}/${category}`
-  const schemaUrl = `${categoryUrl}/${schema}`
+  const idUrl = `${categoryUrl}/${id}`
 
   switch (true) {
-    case !!schema:
-      swapiFetch(schemaUrl)
+    case !!id:
+      swapiFetch(idUrl)
       break
     case !!category:
       swapiFetch(categoryUrl)
