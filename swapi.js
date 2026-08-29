@@ -8,10 +8,17 @@ function swapiFetch(category) {
     .catch((error) => console.error(error))
 }
 
-const swapiCategory = process.argv[2]
+function swapi() {
+  const category = process.argv[2]
+  const result = categories.find((arg) => arg === `${category}`)
 
-if (swapiCategory) {
-  swapiFetch(`${swapiCategory}`)
-} else {
-  console.log(`category required: ${categories}`)
+  if (result) {
+    swapiFetch(`${category}`)
+  } else if (!result) {
+    console.log(`available categories: ${categories}`)
+  } else {
+    console.log(`category required: ${categories}`)
+  }
 }
+
+swapi()
