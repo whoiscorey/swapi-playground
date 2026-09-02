@@ -6,7 +6,7 @@ const categories = [
   "starships",
   "vehicles",
 ];
-const baseUrl = `https://swapi.info/api`;
+const baseUrl = `https://swapi.info/api/`;
 
 function swapiFetch(url) {
   fetch(url)
@@ -19,8 +19,8 @@ function swapiJoe() {
   const category = categories.find((arg) => arg === process.argv[2]);
   const id = process.argv[3];
 
-  const categoryUrl = `${baseUrl}/${category}`;
-  const idUrl = `${categoryUrl}/${id}`;
+  const categoryUrl = new URL(`./${category}`, baseUrl);
+  const idUrl = new URL(`./${category}/${id}`, baseUrl);
 
   switch (true) {
     case !!id:
