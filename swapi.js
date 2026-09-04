@@ -6,33 +6,40 @@ const categories = [
   "starships",
   "vehicles",
 ];
-const baseUrl = `https://swapi.info/api/`;
+const baseUrl = `https://swapi.info`;
 
-function swapiFetch(url) {
+function swapiHandler(res, category, id) {
+  if (!category) {
+    throw new Error(`category required: ${categories.join(", ")}`);
+  }
+  if (!res.ok) {
+    throw new Error(`${category} id ${id} not found`);
+  }
+}
+
+function swapiFetch(url, category, id) {
   fetch(url)
-    .then((res) => res.json())
+    .then((res) => {
+      swapiHandler(res, category, id);
+      return res.json();
+    })
     .then((json) => console.log(json))
-    .catch((error) => console.error(error));
+    .catch((error) => console.error(error.message));
 }
 
 function swapiJoe() {
   const category = categories.find((arg) => arg === process.argv[2]);
   const id = process.argv[3];
 
-  const categoryUrl = new URL(`./${category}`, baseUrl);
-  const idUrl = new URL(`./${category}/${id}`, baseUrl);
+  let urlPath = `/api/${category}`;
 
-  switch (true) {
-    case !!id:
-      swapiFetch(idUrl);
-      break;
-    case !!category:
-      swapiFetch(categoryUrl);
-      break;
-    default:
-      console.error("category required:");
-      swapiFetch(baseUrl);
+  if (id) {
+    urlPath += `/${id}`;
   }
+
+  const url = new URL(urlPath, baseUrl);
+
+  swapiFetch(url, category, id);
 }
 
 swapiJoe();
