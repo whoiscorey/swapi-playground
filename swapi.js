@@ -8,6 +8,18 @@ const categories = [
 ];
 const base = `https://swapi.info/api/`;
 
+function swapiArgs(type, property) {
+  const arg = process.argv[type];
+
+  if (!arg)
+    return undefined
+
+  if (property === undefined)
+    return arg
+
+  return arg.split('.')[property]
+}
+
 function swapiHandler(response, category, id) {
   if (!category)
     throw new Error(`category required: ${categories.join(", ")}`);
@@ -17,9 +29,6 @@ function swapiHandler(response, category, id) {
 }
 
 function swapiProps(category, properties) {
-  if (properties.length === 1)
-    return category[properties[0]];
-
   const result = {};
 
   properties.forEach((property) => {
@@ -52,18 +61,6 @@ function swapiFetch(url, category, property, id) {
       console.log(data)
     })
     .catch((error) => console.error(error.message));
-}
-
-function swapiArgs(type, property) {
-  const argType = process.argv[type];
-
-  if (!argType)
-    return undefined
-
-  if (property === undefined)
-    return argType
-
-  return argType.split('.')[property]
 }
 
 function swapiJoe() {
