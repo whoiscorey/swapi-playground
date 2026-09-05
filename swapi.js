@@ -17,13 +17,27 @@ function swapiHandler(res, category, id) {
   }
 }
 
+function swapiProps(category, properties) {
+  if (properties.length === 1) return category[properties[0]];
+
+  const result = {};
+
+  properties.forEach((property) => {
+    result[property] = category[property];
+  });
+
+  return result;
+}
+
 function swapiData(json, property) {
   if (!property) return json;
 
+  const properties = property.split(',');
+
   if (Array.isArray(json)) {
-    return json.map(category => category[property]);
+    return json.map((category) => swapiProps(category, properties));
   }
-  return json[property];
+  return swapiProps(json, properties);
 }
 
 function swapiFetch(url, category, property, id) {
@@ -40,8 +54,8 @@ function swapiFetch(url, category, property, id) {
 }
 
 function swapiJoe() {
-  const category = categories.find((arg) => arg === process.argv[2].split('.')[0]);
-  const property = process.argv[2].split('.')[1];
+  const category = categories.find((arg) => arg === (process.argv[2] || '').split('.')[0]);
+  const property = (process.argv[2] || '').split('.')[1];
   const id = process.argv[3];
 
   let path = `${category}/`;
