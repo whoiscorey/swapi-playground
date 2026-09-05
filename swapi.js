@@ -24,7 +24,7 @@ function swapiHandler(response, category, id) {
   if (!category)
     throw new Error(`category required: ${categories.join(", ")}`);
 
-  if (!response.ok)
+  if (id && !response.ok)
     throw new Error(`${category} id ${id} not found`);
 }
 
