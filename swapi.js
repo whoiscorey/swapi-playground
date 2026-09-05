@@ -8,17 +8,17 @@ const categories = [
 ];
 const base = `https://swapi.info/api/`;
 
-function swapiHandler(res, category, id) {
-  if (!category) {
+function swapiHandler(response, category, id) {
+  if (!category)
     throw new Error(`category required: ${categories.join(", ")}`);
-  }
-  if (!res.ok) {
+
+  if (!response.ok)
     throw new Error(`${category} id ${id} not found`);
-  }
 }
 
 function swapiProps(category, properties) {
-  if (properties.length === 1) return category[properties[0]];
+  if (properties.length === 1)
+    return category[properties[0]];
 
   const result = {};
 
@@ -30,21 +30,22 @@ function swapiProps(category, properties) {
 }
 
 function swapiData(json, property) {
-  if (!property) return json;
+  if (!property)
+    return json;
 
   const properties = property.split(',');
 
-  if (Array.isArray(json)) {
+  if (Array.isArray(json))
     return json.map((category) => swapiProps(category, properties));
-  }
+
   return swapiProps(json, properties);
 }
 
 function swapiFetch(url, category, property, id) {
   fetch(url)
-    .then((res) => {
-      swapiHandler(res, category, id);
-      return res.json();
+    .then((response) => {
+      swapiHandler(response, category, id);
+      return response.json();
     })
     .then((json) => {
       const data = swapiData(json, property)
@@ -53,16 +54,27 @@ function swapiFetch(url, category, property, id) {
     .catch((error) => console.error(error.message));
 }
 
+function swapiArgs(type, property) {
+  const argType = process.argv[type];
+
+  if (!argType)
+    return undefined
+
+  if (property === undefined)
+    return argType
+
+  return argType.split('.')[property]
+}
+
 function swapiJoe() {
-  const category = categories.find((arg) => arg === (process.argv[2] || '').split('.')[0]);
-  const property = (process.argv[2] || '').split('.')[1];
-  const id = process.argv[3];
+  const category = categories.find((arg) => arg === swapiArgs(2, 0));
+  const property = swapiArgs(2, 1);
+  const id = swapiArgs(3);
 
   let path = `${category}/`;
 
-  if (id) {
+  if (id)
     path += `${id}`
-  }
 
   const url = new URL(path, base);
 
