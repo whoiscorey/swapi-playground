@@ -6,7 +6,7 @@ const categories = [
   "starships",
   "vehicles",
 ];
-const baseUrl = `https://swapi.info`;
+const base = `https://swapi.info/api/`;
 
 function swapiHandler(res, category, id) {
   if (!category) {
@@ -17,29 +17,42 @@ function swapiHandler(res, category, id) {
   }
 }
 
-function swapiFetch(url, category, id) {
+function swapiData(json, property) {
+  if (!property) return json;
+
+  if (Array.isArray(json)) {
+    return json.map(category => category[property]);
+  }
+  return json[property];
+}
+
+function swapiFetch(url, category, property, id) {
   fetch(url)
     .then((res) => {
       swapiHandler(res, category, id);
       return res.json();
     })
-    .then((json) => console.log(json))
+    .then((json) => {
+      const data = swapiData(json, property)
+      console.log(data)
+    })
     .catch((error) => console.error(error.message));
 }
 
 function swapiJoe() {
-  const category = categories.find((arg) => arg === process.argv[2]);
+  const category = categories.find((arg) => arg === process.argv[2].split('.')[0]);
+  const property = process.argv[2].split('.')[1];
   const id = process.argv[3];
 
-  let urlPath = `/api/${category}`;
+  let path = `${category}/`;
 
   if (id) {
-    urlPath += `/${id}`;
+    path += `${id}`
   }
 
-  const url = new URL(urlPath, baseUrl);
+  const url = new URL(path, base);
 
-  swapiFetch(url, category, id);
+  swapiFetch(url, category, property, id);
 }
 
 swapiJoe();
