@@ -28,34 +28,38 @@ function swapiHandler(response, category, id) {
     throw new Error(`${category} id ${id} not found`);
 }
 
-async function swapiResolver(url) {
-  return fetch(url)
+async function swapiResolver(value) {
+  if (typeof value !== 'string' || !value.startsWith(base))
+    return value;
+
+  return fetch(value)
     .then(response => response.json())
-    .then(data => data.title || data.name || url);
+    .then(data => data.title || data.name || value)
+    .catch(() => value);
 }
 
 async function swapiProps(category, properties) {
   const result = {};
 
   for (const property of properties) {
-    const url = category[property];
+    const value = category[property];
 
     if (property === 'url') {
-      result[property] = url;
+      result[property] = value;
       continue;
     }
 
-    if (Array.isArray(url)) {
-      result[property] = await Promise.all(url.map(urls => swapiResolver(urls)))
+    if (Array.isArray(value)) {
+      result[property] = await Promise.all(value.map(url => swapiResolver(url)))
       continue;
     }
 
-    if (typeof url === 'string' && url.startsWith(base)) {
-      result[property] = await swapiResolver(url)
+    if (typeof value === 'string' && value.startsWith(base)) {
+      result[property] = await swapiResolver(value)
       continue
     }
 
-    result[property] = url;
+    result[property] = value;
   };
 
   return result;
