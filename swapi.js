@@ -12,12 +12,12 @@ function swapiArgs(type, property) {
   const arg = process.argv[type];
 
   if (!arg)
-    return undefined
+    return undefined;
 
   if (property === undefined)
-    return arg
+    return arg;
 
-  return arg.split('.')[property]
+  return arg.split('.')[property];
 }
 
 function swapiHandler(response, category, id) {
@@ -28,26 +28,48 @@ function swapiHandler(response, category, id) {
     throw new Error(`${category} id ${id} not found`);
 }
 
-function swapiProps(category, properties) {
+async function swapiResolver(url) {
+  return fetch(url)
+    .then(response => response.json())
+    .then(data => data.title || data.name || url);
+}
+
+async function swapiProps(category, properties) {
   const result = {};
 
-  properties.forEach((property) => {
-    result[property] = category[property];
-  });
+  for (const property of properties) {
+    const url = category[property];
+
+    if (property === 'url') {
+      result[property] = url;
+      continue;
+    }
+
+    if (Array.isArray(url)) {
+      result[property] = await Promise.all(url.map(urls => swapiResolver(urls)))
+      continue;
+    }
+
+    if (typeof url === 'string' && url.startsWith(base)) {
+      result[property] = await swapiResolver(url)
+      continue
+    }
+
+    result[property] = url;
+  };
 
   return result;
 }
 
-function swapiData(json, property) {
-  if (!property)
-    return json;
-
-  const properties = property.split(',');
+async function swapiData(json, property) {
+  const properties = property
+    ? property.split(',')
+    : Object.keys(Array.isArray(json) ? json[0] : json);
 
   if (Array.isArray(json))
-    return json.map((category) => swapiProps(category, properties));
+    return await Promise.all(json.map(category => swapiProps(category, properties)));
 
-  return swapiProps(json, properties);
+  return await swapiProps(json, properties);
 }
 
 function swapiFetch(url, category, property, id) {
@@ -56,10 +78,7 @@ function swapiFetch(url, category, property, id) {
       swapiHandler(response, category, id);
       return response.json();
     })
-    .then((json) => {
-      const data = swapiData(json, property)
-      console.log(data)
-    })
+    .then((json) => swapiData(json, property).then((data) => console.log(data)))
     .catch((error) => console.error(error.message));
 }
 
@@ -71,7 +90,7 @@ function swapiJoe() {
   let path = `${category}/`;
 
   if (id)
-    path += `${id}`
+    path += `${id}`;
 
   const url = new URL(path, base);
 
