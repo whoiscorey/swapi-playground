@@ -20,12 +20,18 @@ function swapiArgs(type, property) {
   return arg.split('.')[property];
 }
 
-function swapiHandler(response, category, id) {
+function swapiHandler(response, category, id, result, query) {
   if (!category)
-    throw new Error(`category required: ${categories.join(", ")}`);
+    throw new Error(`error, category required: ${categories.join(", ")}`);
 
   if (id && !response.ok)
     throw new Error(`${category} id ${id} not found`);
+
+  if (id === 'search' && !query)
+    throw new Error('error, query required: `node swapi people search luke`')
+
+  if (result && result.length === 0)
+    throw new Error(`no results for query '${query}' found in category '${category}'`);
 }
 
 async function swapiResolver(value) {
@@ -77,37 +83,41 @@ async function swapiData(json, property) {
 }
 
 function swapiSearch(query, data) {
-  if (!query || !data)
+  if (!query || !data || (Array.isArray(data) && data.length === 0))
     return undefined;
 
   const search = query.toLowerCase();
   const results = Array.isArray(data) ? data : [data];
 
-  return results.filter(value => {
-    return Object.values(value).some(val => {
-      if (typeof val === 'string')
-        return val.toLowerCase().includes(search);
 
-      if (Array.isArray(val))
-        return val.join(' ').toLowerCase().includes(search);
+  const result = results.filter(values => {
+    return Object.values(values).some(value => {
+      if (typeof value === 'string')
+        return value.toLowerCase().includes(search);
+
+      if (Array.isArray(value))
+        return value.join(' ').toLowerCase().includes(search);
 
       return false;
     });
   });
+
+  return result;
 }
 
 function swapiFetch(url, category, property, id, query) {
   fetch(url)
     .then((response) => {
-      swapiHandler(response, category, id);
+      swapiHandler(response, category, id, null, query);
       return response.json();
     })
     .then((json) => {
       return swapiData(json, property);
     })
     .then((data) => {
-      if (id === 'search' && query) {
+      if (id === 'search') {
         data = swapiSearch(query, data);
+        swapiHandler(null, category, null, data, query)
       }
       console.log(data);
     })
@@ -124,7 +134,7 @@ function swapiJoe() {
 
   let path = `${category}/`;
 
-  if ((!isNaN(id) && id !== undefined) || (typeof id === 'string' && id === 'schema')) {
+  if ((!isNaN(id) && id !== undefined) || (typeof id === 'string' && id !== 'search')) {
     path += `${id}`;
   }
 
