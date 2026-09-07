@@ -79,6 +79,6 @@ node swapi starships.name,crew,passengers,pilots,films 10
 ```javascript
 node swapi people search skywalker
 
-// returns all data for all people with a property that contains the string 'skywalker'
+// returns all data for all people with a property containing a value that includes the string 'skywalker'
 // need to add search properties to control the scope of the search
 ```
