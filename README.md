@@ -75,7 +75,7 @@ node swapi starships.name,crew,passengers,pilots,films 10
 // returns the name, number of crew members, passenger capacity, the pilots of, and the film appearances of the Millennium Falcon
 ```
 
-#### search a category for an included string
+#### search for a string in a category
 ```javascript
 node swapi people search skywalker
 
