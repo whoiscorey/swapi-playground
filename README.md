@@ -23,6 +23,8 @@ Having fun with the Star Wars API
   - `node swapi category.property1,property2`
 - get data of multiple properties for an id in a category:
   - `node swapi category.property1,property2 id`
+- search for a string in a category:
+  - `node swapi category search string`
 
 ### usage examples: 
 
@@ -71,4 +73,12 @@ node swapi species.name,designation,homeworld,people,films
 node swapi starships.name,crew,passengers,pilots,films 10
 
 // returns the name, number of crew members, passenger capacity, the pilots of, and the film appearances of the Millennium Falcon
+```
+
+#### search for a string in a category
+```javascript
+node swapi people search skywalker
+
+// returns all data for all people with a property containing a value that includes the string 'skywalker'
+// need to add search properties to control the scope of the search
 ```
