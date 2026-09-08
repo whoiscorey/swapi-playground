@@ -27,7 +27,7 @@ function swapiHandler(response, category, id, result, query) {
   if (id && !response.ok)
     throw new Error(`${category} id ${id} not found`);
 
-  if (id === 'search' && !query)
+  if (typeof id === 'string' && id === 'search' && !query)
     throw new Error('error, query required: `node swapi people search luke`')
 
   if (result && result.length === 0)
@@ -82,7 +82,7 @@ async function swapiData(json, property) {
   return await swapiProps(json, properties);
 }
 
-function swapiSearch(query, data) {
+async function swapiSearch(query, data, property, searchProperty) {
   if (!query || !data || (Array.isArray(data) && data.length === 0))
     return undefined;
 
@@ -91,32 +91,32 @@ function swapiSearch(query, data) {
 
 
   const result = results.filter(values => {
-    return Object.values(values).some(value => {
-      if (typeof value === 'string')
-        return value.toLowerCase().includes(search);
+    const target = searchProperty ? values[searchProperty] : Object.values(values);
 
-      if (Array.isArray(value))
-        return value.join(' ').toLowerCase().includes(search);
+    if (typeof target === 'string')
+      return target.toLowerCase().includes(search);
 
-      return false;
-    });
+    if (Array.isArray(target))
+      return target.some(value => typeof value === 'string' && value.toLowerCase().includes(search));
+
+    return false;
   });
 
-  return result;
+  return await swapiData(result, property);
 }
 
-function swapiFetch(url, category, property, id, query) {
+function swapiFetch(url, category, property, id, query, searchProperty) {
   fetch(url)
     .then((response) => {
       swapiHandler(response, category, id, null, query);
       return response.json();
     })
     .then((json) => {
-      return swapiData(json, property);
+      return swapiData(json, id === 'search' ? undefined : property);
     })
-    .then((data) => {
+    .then(async (data) => {
       if (id === 'search') {
-        data = swapiSearch(query, data);
+        data = await swapiSearch(query, data, property, searchProperty);
         swapiHandler(null, category, null, data, query)
       }
       console.log(data);
@@ -128,7 +128,10 @@ function swapiJoe() {
   const category = categories.find((arg) => arg === swapiArgs(2, 0));
   const property = swapiArgs(2, 1);
 
-  const search = swapiArgs(3) === 'search';
+  const searchArg = swapiArgs(3, 0);
+  const searchProperty = swapiArgs(3, 1);
+
+  const search = searchArg === 'search';
   const id = search ? 'search' : swapiArgs(3);
   const query = search ? swapiArgs(4) : undefined;
 
@@ -140,7 +143,7 @@ function swapiJoe() {
 
   const url = new URL(path, base);
 
-  swapiFetch(url, category, property, id, query);
+  swapiFetch(url, category, property, id, query, searchProperty);
 }
 
 swapiJoe();
