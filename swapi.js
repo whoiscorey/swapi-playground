@@ -20,14 +20,6 @@ function swapiArgs(type, property) {
   return arg.split('.')[property];
 }
 
-function swapiHandler(category, id, result, query) {
-  if (typeof id === 'string' && id === 'search' && !query)
-    throw new Error('error, query required: `node swapi people search luke`')
-
-  if (result && result.length === 0)
-    throw new Error(`no results for query '${query}' found in category '${category}'`);
-}
-
 async function swapiResolver(value) {
   if (typeof value !== 'string' || !value.startsWith(base))
     return value;
@@ -66,6 +58,9 @@ async function swapiProps(category, properties) {
 }
 
 async function swapiData(json, property) {
+  if (Array.isArray(json) && json.length === 0)
+    return json;
+
   const properties = property
     ? property.split(',')
     : Object.keys(Array.isArray(json) ? json[0] : json);
@@ -111,10 +106,12 @@ function swapiFetch(url, category, property, id, query, searchProperty) {
       return swapiData(data, id === 'search' ? undefined : property);
     })
     .then(async (data) => {
-      if (id === 'search') {
+      if (id === 'search')
         data = await swapiSearch(query, data, property, searchProperty);
-        swapiHandler(null, category, null, data, query)
-      }
+
+      if (data && data.length === 0)
+        throw new Error(`no results for query '${query}' found in category '${category}'`);
+
       console.dir(data, { depth: null });
     })
     .catch((error) => console.error(error.message))
@@ -136,6 +133,9 @@ function swapiJoe() {
     const id = search ? 'search' : swapiArgs(3);
     const query = search ? swapiArgs(4) : undefined;
 
+    if (typeof id === 'string' && id === 'search' && !query)
+      throw new Error('error, query required: `node swapi people search luke`')
+
     let path = `${category}/`;
 
     if ((!isNaN(id) && id !== undefined) || (typeof id === 'string' && id !== 'search')) {
@@ -147,7 +147,7 @@ function swapiJoe() {
     swapiFetch(url, category, property, id, query, searchProperty);
 
   } catch (error) {
-    console.log(error.message)
+    console.log(error.message);
   }
 }
 
