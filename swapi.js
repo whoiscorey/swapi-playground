@@ -6,7 +6,7 @@ const categories = [
   "starships",
   "vehicles",
 ];
-const base = `https://swapi.info/api/`;
+const base = `https://swapi.dev/api/`;
 
 function swapiArgs(type, property) {
   const arg = process.argv[type];
@@ -89,7 +89,6 @@ async function swapiSearch(query, data, property, searchProperty) {
   const search = query.toLowerCase();
   const results = Array.isArray(data) ? data : [data];
 
-
   const result = results.filter(values => {
     const target = searchProperty ? values[searchProperty] : Object.values(values);
 
@@ -112,14 +111,15 @@ function swapiFetch(url, category, property, id, query, searchProperty) {
       return response.json();
     })
     .then((json) => {
-      return swapiData(json, id === 'search' ? undefined : property);
+      const data = json.results || json;
+      return swapiData(data, id === 'search' ? undefined : property);
     })
     .then(async (data) => {
       if (id === 'search') {
         data = await swapiSearch(query, data, property, searchProperty);
         swapiHandler(null, category, null, data, query)
       }
-      console.log(data);
+      console.dir(data, { depth: null });
     })
     .catch((error) => console.error(error.message))
 }
