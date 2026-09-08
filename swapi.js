@@ -21,9 +21,6 @@ function swapiArgs(type, property) {
 }
 
 function swapiHandler(response, category, id, result, query) {
-  if (!category)
-    throw new Error(`error, category required: ${categories.join(", ")}`);
-
   if (id && !response.ok)
     throw new Error(`${category} id ${id} not found`);
 
@@ -107,7 +104,6 @@ async function swapiSearch(query, data, property, searchProperty) {
 function swapiFetch(url, category, property, id, query, searchProperty) {
   fetch(url)
     .then((response) => {
-      swapiHandler(response, category, id, null, query);
       return response.json();
     })
     .then((json) => {
@@ -125,25 +121,34 @@ function swapiFetch(url, category, property, id, query, searchProperty) {
 }
 
 function swapiJoe() {
-  const category = categories.find((arg) => arg === swapiArgs(2, 0));
-  const property = swapiArgs(2, 1);
+  try {
+    const category = categories.find((arg) => arg === swapiArgs(2, 0));
 
-  const searchArg = swapiArgs(3, 0);
-  const searchProperty = swapiArgs(3, 1);
+    if (!category)
+      throw new Error(`error, category required: ${categories.join(", ")}`);
 
-  const search = searchArg === 'search';
-  const id = search ? 'search' : swapiArgs(3);
-  const query = search ? swapiArgs(4) : undefined;
+    const property = swapiArgs(2, 1);
 
-  let path = `${category}/`;
+    const searchArg = swapiArgs(3, 0);
+    const searchProperty = swapiArgs(3, 1);
 
-  if ((!isNaN(id) && id !== undefined) || (typeof id === 'string' && id !== 'search')) {
-    path += `${id}`;
+    const search = searchArg === 'search';
+    const id = search ? 'search' : swapiArgs(3);
+    const query = search ? swapiArgs(4) : undefined;
+
+    let path = `${category}/`;
+
+    if ((!isNaN(id) && id !== undefined) || (typeof id === 'string' && id !== 'search')) {
+      path += `${id}`;
+    }
+
+    const url = new URL(path, base);
+
+    swapiFetch(url, category, property, id, query, searchProperty);
+
+  } catch (error) {
+    console.log(error.message)
   }
-
-  const url = new URL(path, base);
-
-  swapiFetch(url, category, property, id, query, searchProperty);
 }
 
 swapiJoe();
