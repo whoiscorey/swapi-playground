@@ -20,10 +20,7 @@ function swapiArgs(type, property) {
   return arg.split('.')[property];
 }
 
-function swapiHandler(response, category, id, result, query) {
-  if (id && !response.ok)
-    throw new Error(`${category} id ${id} not found`);
-
+function swapiHandler(category, id, result, query) {
   if (typeof id === 'string' && id === 'search' && !query)
     throw new Error('error, query required: `node swapi people search luke`')
 
@@ -104,6 +101,9 @@ async function swapiSearch(query, data, property, searchProperty) {
 function swapiFetch(url, category, property, id, query, searchProperty) {
   fetch(url)
     .then((response) => {
+      if (id && !response.ok)
+        throw new Error(`${category} id ${id} not found`);
+
       return response.json();
     })
     .then((json) => {
