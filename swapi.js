@@ -58,13 +58,13 @@ async function swapiProps(category, properties) {
 
 async function swapiData(json, property) {
   const input = Array.isArray(json) ? json[0] : json;
-  console.log(json, "--- json ---");
-  console.log(json[0], "--- json[0] ---");
-  console.log(property, "--- property ---");
+  console.log("--- start json ---", json, "--- end json ---");
+  console.log("--- json[0] ---", json[0], "--- end json[0] ---");
+  console.log("--- start property ---", property, "--- end property ---");
 
   if ((!property && !input) || input.length === 0)
     throw new Error("no results found");
-  console.log(input, "--- input ---");
+  console.log("--- start input ---", input, "--- end input ---");
 
   let properties;
 
@@ -106,7 +106,7 @@ async function swapiSearch(query, data, property, searchProperty) {
     return false;
   });
 
-  console.log(result, "--- result ---");
+  console.log("--- start result ---", result, "--- end result ---");
   return await swapiData(result, property);
 }
 
