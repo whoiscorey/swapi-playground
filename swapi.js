@@ -6,7 +6,7 @@ const categories = [
   "starships",
   "vehicles",
 ];
-const base = `https://swapi.dev/api/`;
+const base = `https://swapi.info/api/`;
 
 function swapiArgs(type, property) {
   const arg = process.argv[type];
@@ -97,7 +97,7 @@ function swapiFetch(url, category, property, id, query, searchProperty) {
   fetch(url)
     .then((response) => {
       if (id && !response.ok)
-        throw new Error(`${category} id ${id} not found`);
+        throw new Error('id not found');
 
       return response.json();
     })
@@ -110,11 +110,11 @@ function swapiFetch(url, category, property, id, query, searchProperty) {
         data = await swapiSearch(query, data, property, searchProperty);
 
       if (data && data.length === 0)
-        throw new Error(`no results for query '${query}' found in category '${category}'`);
+        throw new Error('no results');
 
       console.dir(data, { depth: null });
     })
-    .catch((error) => console.error(error.message))
+    .catch((error) => console.error(error))
 }
 
 function swapiJoe() {
