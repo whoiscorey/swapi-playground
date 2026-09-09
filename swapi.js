@@ -6,7 +6,8 @@ const categories = [
   "starships",
   "vehicles",
 ];
-const base = `https://swapi.info/api/`;
+const base = `https://swapi.dev/api/`;
+const cache = new Map();
 
 function swapiArgs(type, property) {
   const arg = process.argv[type];
@@ -24,10 +25,19 @@ async function swapiResolver(value) {
   if (typeof value !== 'string' || !value.startsWith(base))
     return value;
 
-  return fetch(value)
+  if (cache.has(value))
+    return cache.get(value);
+
+  const promise = fetch(value)
     .then(response => response.json())
     .then(data => data.title || data.name || value)
-    .catch(() => value);
+    .catch(() => {
+      cache.delete(value);
+      return value;
+    });
+
+  cache.set(value, promise);
+  return promise;
 }
 
 async function swapiProps(category, properties) {
@@ -93,7 +103,7 @@ async function swapiSearch(query, data, property, searchProperty) {
   return await swapiData(result, property);
 }
 
-function swapiFetch(url, category, property, id, query, searchProperty) {
+function swapiFetch(url, property, id, query, searchProperty) {
   fetch(url)
     .then((response) => {
       if (id && !response.ok)
@@ -144,7 +154,7 @@ function swapiJoe() {
 
     const url = new URL(path, base);
 
-    swapiFetch(url, category, property, id, query, searchProperty);
+    swapiFetch(url, property, id, query, searchProperty);
 
   } catch (error) {
     console.log(error.message);
