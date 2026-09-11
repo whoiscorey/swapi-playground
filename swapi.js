@@ -21,6 +21,21 @@ function swapiArgs(type, property) {
   return arg.split('.')[property];
 }
 
+async function swapiPages(url) {
+  const results = [];
+  let next = url;
+
+  while (next) {
+    const response = await fetch(next);
+    const json = await response.json();
+
+    results.push(...json.results);
+    next = json.next;
+  }
+
+  return results;
+}
+
 async function swapiResolver(value) {
   if (typeof value !== 'string' || !value.startsWith(base))
     return value;
@@ -71,9 +86,8 @@ async function swapiData(json, property) {
   if (Array.isArray(json) && json.length === 0)
     return json;
 
-  const properties = property
-    ? property.split(',')
-    : Object.keys(Array.isArray(json) ? json[0] : json);
+  const array = Array.isArray(json) ? json[0] : json
+  const properties = property ? property.split(',') : Object.keys(array);
 
   if (Array.isArray(json))
     return await Promise.all(json.map(category => swapiProps(category, properties)));
@@ -82,7 +96,9 @@ async function swapiData(json, property) {
 }
 
 async function swapiSearch(query, data, property, searchProperty) {
-  if (!query || !data || (Array.isArray(data) && data.length === 0))
+  const array = (Array.isArray(data) && data.length > 0);
+
+  if (!query || !array)
     return undefined;
 
   const search = query.toLowerCase();
@@ -104,6 +120,8 @@ async function swapiSearch(query, data, property, searchProperty) {
 }
 
 function swapiFetch(url, property, id, query, searchProperty) {
+  const option = id === 'search' ? undefined : property;
+
   fetch(url)
     .then((response) => {
       if (id && !response.ok)
@@ -111,9 +129,10 @@ function swapiFetch(url, property, id, query, searchProperty) {
 
       return response.json();
     })
-    .then((json) => {
-      const data = json.results || json;
-      return swapiData(data, id === 'search' ? undefined : property);
+    .then(async (json) => {
+      const pages = json.next ? await swapiPages(json.next) : [];
+      const data = json.results ? [...json.results, ...pages] : json;
+      return swapiData(data, option);
     })
     .then(async (data) => {
       if (id === 'search')
@@ -122,7 +141,7 @@ function swapiFetch(url, property, id, query, searchProperty) {
       if (data && data.length === 0)
         throw new Error('no results');
 
-      console.dir(data, { depth: null });
+      console.log(data);
     })
     .catch((error) => console.error(error))
 }
@@ -143,21 +162,19 @@ function swapiJoe() {
     const id = search ? 'search' : swapiArgs(3);
     const query = search ? swapiArgs(4) : undefined;
 
-    if (typeof id === 'string' && id === 'search' && !query)
+    if (id === 'search' && !query)
       throw new Error('error, query required: `node swapi people search luke`')
 
     let path = `${category}/`;
 
-    if ((!isNaN(id) && id !== undefined) || (typeof id === 'string' && id !== 'search')) {
-      path += `${id}`;
-    }
+    if (typeof id === 'string' && id !== 'search') { path += `${id}` }
 
     const url = new URL(path, base);
 
     swapiFetch(url, property, id, query, searchProperty);
 
   } catch (error) {
-    console.log(error.message);
+    console.error(error);
   }
 }
 
