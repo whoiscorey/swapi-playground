@@ -120,8 +120,6 @@ async function swapiSearch(query, data, property, searchProperty) {
 }
 
 function swapiFetch(url, property, id, query, searchProperty) {
-  const option = id === 'search' ? undefined : property;
-
   fetch(url)
     .then((response) => {
       if (id && !response.ok)
@@ -132,18 +130,24 @@ function swapiFetch(url, property, id, query, searchProperty) {
     .then(async (json) => {
       const pages = json.next ? await swapiPages(json.next) : [];
       const data = json.results ? [...json.results, ...pages] : json;
-      return swapiData(data, option);
-    })
-    .then(async (data) => {
-      if (id === 'search')
-        data = await swapiSearch(query, data, property, searchProperty);
 
+      if (id !== 'search')
+        return swapiData(data, property);
+
+      const fields = searchProperty && property
+        ? [...new Set([searchProperty, ...property.split(',')])].join(',')
+        : undefined;
+
+      const resolved = await swapiData(data, fields);
+      return swapiSearch(query, resolved, property, searchProperty)
+    })
+    .then((data) => {
       if (data && data.length === 0)
-        throw new Error('no results');
+        throw new Error('no results')
 
       console.log(data);
     })
-    .catch((error) => console.error(error))
+    .catch((error) => console.error(error.message))
 }
 
 function swapiJoe() {
@@ -167,14 +171,15 @@ function swapiJoe() {
 
     let path = `${category}/`;
 
-    if (typeof id === 'string' && id !== 'search') { path += `${id}` }
+    if (typeof id === 'string' && id !== 'search')
+      path += `${id}`
 
     const url = new URL(path, base);
 
     swapiFetch(url, property, id, query, searchProperty);
 
   } catch (error) {
-    console.error(error);
+    console.error(error.message);
   }
 }
 
