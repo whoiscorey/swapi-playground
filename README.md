@@ -33,6 +33,9 @@ Having fun with the Star Wars API
   - `node swapi category search string`
 - search for a string in one property of a category:
   - `node swapi category search.property string`
+- search date_properties of a category for items before or after a date: 
+  - `node swapi category search.date_property before date`
+  - `node swapi category search.date_property after date`
 
 ### usage examples:
 
@@ -95,3 +98,21 @@ node swapi films search.characters vader
 
 // returns all data for films with a character whose name contains 'vader'
 ```
+
+#### search a date property of a category with the before or after operator
+```javascript
+node swapi films search.release_date before 2005
+
+// returns all data for films released before 2005, not including films released in 2005
+```
+
+```javascript
+node swapi films search.release_date after 2002
+
+// returns all data for all films released after 2002, not including any films released in 2002
+```
+- date properties: `release_date`, `created`, `edited` 
+  - the date property `release_date` only exists for the `films` category
+  - the date properties `create` and `edited` exist in all categories
+- supported date formats: `yyyy`, `yyyy-mm`, `yyyy-mm-dd`
+- the date provided in the query is **excluded** by both operators

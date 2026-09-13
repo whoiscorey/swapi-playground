@@ -7,6 +7,7 @@ const categories = [
   "vehicles",
 ];
 const base = `https://swapi.dev/api/`;
+const operators = ['before', 'after'];
 const cache = new Map();
 
 function swapiArgs(type, property) {
@@ -98,7 +99,17 @@ async function swapiData(json, property) {
   return await swapiProps(json, properties);
 }
 
-async function swapiSearch(query, data, property, searchProperty) {
+function swapiDate(value) {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value);
+}
+
+function swapiCompare(value, query, operator) {
+  const date = String(value).slice(0, query.length);
+
+  return operator === 'before' ? date < query : date > query;
+}
+
+async function swapiSearch(query, data, property, searchProperty, operator) {
   const array = (Array.isArray(data) && data.length > 0);
 
   if (!query || !array)
@@ -107,8 +118,22 @@ async function swapiSearch(query, data, property, searchProperty) {
   const search = query.toLowerCase();
   const results = Array.isArray(data) ? data : [data];
 
+  if (operator) {
+    const sample = results.find(values => values[searchProperty] !== undefined);
+
+    if (!swapiDate(sample && sample[searchProperty]))
+      throw new Error(`error: ${operator} operator requires a date property\n`
+        + `${operator} operator supported properties: created, edited, release_date`);
+
+    if (!/^\d{4}(-\d{2}){0,2}$/.test(query))
+      throw new Error(`error: ${operator} operator requires proper date formatting\nsupported formats: yyyy, yyyy-mm-dd`);
+  }
+
   const result = results.filter(values => {
     const target = searchProperty ? values[searchProperty] : Object.values(values);
+
+    if (operator)
+      return swapiCompare(target, query, operator)
 
     if (typeof target === 'string')
       return target.toLowerCase().includes(search);
@@ -122,7 +147,7 @@ async function swapiSearch(query, data, property, searchProperty) {
   return await swapiData(result, property);
 }
 
-function swapiFetch(url, property, id, query, searchProperty) {
+function swapiFetch(url, property, id, query, searchProperty, operator) {
   fetch(url)
     .then((response) => {
       if (id && !response.ok)
@@ -142,7 +167,7 @@ function swapiFetch(url, property, id, query, searchProperty) {
         : undefined;
 
       const resolved = await swapiData(data, fields);
-      return swapiSearch(query, resolved, property, searchProperty)
+      return swapiSearch(query, resolved, property, searchProperty, operator)
     })
     .then((data) => {
       if (data && data.length === 0)
@@ -172,11 +197,15 @@ function swapiJoe() {
     const searchProperty = swapiArgs(3, 1);
 
     const search = searchArg === 'search';
+    const operator = search && operators.includes(swapiArgs(4)) ? swapiArgs(4) : undefined;
     const id = search ? 'search' : swapiArgs(3);
-    const query = search ? swapiArgs(4) : undefined;
+    const query = search ? (operator ? swapiArgs(5) : swapiArgs(4)) : undefined;
 
     if (id === 'search' && !query)
-      throw new Error('error, query required: `node swapi people search luke`')
+      throw new Error('error, search query required: `node swapi people search luke`')
+
+    if (operator && !searchProperty)
+      throw new Error('error: operator requires a date property: `node swapi films search.release_date before 2005`');
 
     let path = `${category}/`;
 
@@ -185,7 +214,7 @@ function swapiJoe() {
 
     const url = new URL(path, base);
 
-    swapiFetch(url, property, id, query, searchProperty);
+    swapiFetch(url, property, id, query, searchProperty, operator);
 
   } catch (error) {
     console.error(error.message);
