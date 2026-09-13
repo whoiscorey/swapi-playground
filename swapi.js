@@ -29,6 +29,9 @@ async function swapiPages(url) {
     const response = await fetch(next);
     const json = await response.json();
 
+    if (Array.isArray(json))
+      return json;
+
     results.push(...json.results);
     next = json.next;
   }
