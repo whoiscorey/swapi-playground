@@ -40,20 +40,20 @@ async function swapiResolver(value) {
   if (typeof value !== 'string' || !value.startsWith(base))
     return value;
 
-  if (cache.has(value))
-    return cache.get(value);
+  const category = value.slice(base.length).split('/')[0];
+  const url = new URL(`${category}/`, base)
 
-  const promise = fetch(value)
-    .then(response => response.json())
-    .then(data => data.title || data.name || value)
-    .catch(() => {
-      cache.delete(value);
-      return value;
-    });
+  if (!cache.has(category))
+    cache.set(category, swapiPages(url)
+      .then(list => new Map(list.map(item => [item.url, item.title || item.name || item.url])))
+      .catch(error => {
+        console.error(`error: could not resolve ${category}: ${error.message}`);
+        return new Map();
+      }));
 
-  cache.set(value, promise);
-  return promise;
-}
+  const map = await cache.get(category);
+  return map.get(value) ?? value;
+};
 
 async function swapiProps(category, properties) {
   const result = {};
