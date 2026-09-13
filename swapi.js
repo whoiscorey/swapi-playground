@@ -56,7 +56,7 @@ async function swapiResolver(value) {
 
   const map = await cache.get(category);
   return map.get(value) ?? value;
-};
+}
 
 async function swapiProps(category, properties) {
   const result = {};
@@ -155,10 +155,16 @@ function swapiFetch(url, property, id, query, searchProperty) {
 
 function swapiJoe() {
   try {
-    const category = categories.find((arg) => arg === swapiArgs(2, 0));
+    const available = `available categories: ${categories.join(', ')}`;
+    const input = swapiArgs(2, 0);
+
+    if (!input)
+      return console.log(available);
+
+    const category = categories.find((arg) => arg === input);
 
     if (!category)
-      throw new Error(`error, category required: ${categories.join(", ")}`);
+      throw new Error(`error, supported category required\n${available}`);
 
     const property = swapiArgs(2, 1);
 
