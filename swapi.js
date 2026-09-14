@@ -149,10 +149,11 @@ async function swapiSearch(data, options) {
 }
 
 function swapiFetch(url, options) {
-  const { property, searchProperty, id } = options;
+  const { property, searchProperty, mode } = options;
+
   fetch(url)
     .then((response) => {
-      if (id && !response.ok)
+      if (mode === 'id' && !response.ok)
         throw new Error('id not found');
 
       return response.json();
@@ -161,7 +162,7 @@ function swapiFetch(url, options) {
       const pages = json.next ? await swapiPages(json.next) : [];
       const data = json.results ? [...json.results, ...pages] : json;
 
-      if (id !== 'search')
+      if (mode !== 'search')
         return swapiData(data, property);
 
       const fields = searchProperty && property
@@ -200,10 +201,11 @@ function swapiJoe() {
 
     const search = searchArg === 'search';
     const operator = search && operators.includes(swapiArgs(4)) ? swapiArgs(4) : undefined;
-    const id = search ? 'search' : swapiArgs(3);
+    const id = search ? undefined : swapiArgs(3);
+    const mode = search ? 'search' : (id ? 'id' : 'list');
     const query = search ? (operator ? swapiArgs(5) : swapiArgs(4)) : undefined;
 
-    if (id === 'search' && !query)
+    if (mode === 'search' && !query)
       throw new Error('error, search query required: `node swapi people search luke`')
 
     if (operator && !searchProperty)
@@ -211,11 +213,11 @@ function swapiJoe() {
 
     let path = `${category}/`;
 
-    if (typeof id === 'string' && id !== 'search')
+    if (mode === 'id')
       path += `${id}`
 
     const url = new URL(path, base);
-    const options = { property, id, query, searchProperty, operator };
+    const options = { property, mode, query, searchProperty, operator };
 
     swapiFetch(url, options);
 
