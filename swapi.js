@@ -109,7 +109,8 @@ function swapiCompare(value, query, operator) {
   return operator === 'before' ? date < query : date > query;
 }
 
-async function swapiSearch(query, data, property, searchProperty, operator) {
+async function swapiSearch(data, options) {
+  const { query, property, searchProperty, operator } = options;
   const array = (Array.isArray(data) && data.length > 0);
 
   if (!query || !array)
@@ -147,7 +148,8 @@ async function swapiSearch(query, data, property, searchProperty, operator) {
   return await swapiData(result, property);
 }
 
-function swapiFetch(url, property, id, query, searchProperty, operator) {
+function swapiFetch(url, options) {
+  const { property, searchProperty, id } = options;
   fetch(url)
     .then((response) => {
       if (id && !response.ok)
@@ -167,7 +169,7 @@ function swapiFetch(url, property, id, query, searchProperty, operator) {
         : undefined;
 
       const resolved = await swapiData(data, fields);
-      return swapiSearch(query, resolved, property, searchProperty, operator)
+      return swapiSearch(resolved, options)
     })
     .then((data) => {
       if (data && data.length === 0)
@@ -213,8 +215,9 @@ function swapiJoe() {
       path += `${id}`
 
     const url = new URL(path, base);
+    const options = { property, id, query, searchProperty, operator };
 
-    swapiFetch(url, property, id, query, searchProperty, operator);
+    swapiFetch(url, options);
 
   } catch (error) {
     console.error(error.message);
